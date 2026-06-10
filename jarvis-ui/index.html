@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JARVIS Interface</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+
+  <main class="shell">
+    <aside class="status-panel glass-panel">
+      <div class="panel-label">System Status</div>
+      <div class="status-title">JARVIS CORE ONLINE</div>
+      <div class="status-stack">
+        <div class="status-row"><span>MODE</span><strong id="statusMode">ANALYTIC</strong></div>
+        <div class="status-row"><span>ENGINE</span><strong id="statusEngine">WAITING</strong></div>
+        <div class="status-row"><span>BLOCKS</span><strong id="statusBlocks">0</strong></div>
+        <div class="status-row"><span>MEMORY</span><strong id="statusMemory">0</strong></div>
+      </div>
+      <div class="status-note" id="statusNote">Awaiting input.</div>
+    </aside>
+
+    <section class="conversation-stage">
+      <header class="hero glass-panel">
+        <div>
+          <div class="eyebrow">JARVIS MODULE GRID</div>
+          <h1>Intelligence in motion.</h1>
+        </div>
+        <div class="hero-meta">
+          <span class="meta-chip">live blocks</span>
+          <span class="meta-chip">chunked replies</span>
+          <span class="meta-chip">stream ready</span>
+          <span class="meta-chip" id="voiceChip">voice standby</span>
+        </div>
+      </header>
+
+      <section id="moduleGrid" class="module-grid" aria-live="polite"></section>
+      <div id="thinkingRow" class="thinking-row hidden">
+        <div class="thinking-pulse"></div>
+        <div class="thinking-text">Processing nodes...</div>
+      </div>
+    </section>
+  </main>
+
+  <form id="chatForm" class="composer glass-panel" autocomplete="off">
+    <div class="composer-led"></div>
+    <input id="chatInput" name="message" type="text" placeholder="Speak to JARVIS..." aria-label="Type a message to JARVIS" />
+    <button type="button" id="voiceToggle">Enable Voice</button>
+    <button type="submit">Transmit</button>
+  </form>
+
+  <script src="app.js"></script>
+</body>
+</html>

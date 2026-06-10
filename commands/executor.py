@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+import tempfile
+import webbrowser
 from pathlib import Path
 from typing import Callable
+from urllib.parse import quote_plus
 
 from commands.parser import Command
 
@@ -22,8 +27,18 @@ class CommandExecutor:
         return handler(command.argument)
 
     def _open_browser(self, argument: str) -> str:
-        target = argument or "default browser"
-        return f"Browser launch simulated for {target}."
+        target = argument.strip() if argument else "https://www.google.com"
+        if not target.startswith(("http://", "https://")):
+            if "." in target and " " not in target:
+                target = f"https://{target}"
+            else:
+                target = f"https://www.google.com/search?q={quote_plus(target)}"
+
+        try:
+            webbrowser.open(target, new=2)
+            return f"Browser opened for {target}."
+        except Exception as exc:
+            return f"Browser launch failed: {exc}"
 
     def _create_file(self, argument: str) -> str:
         if not argument:
@@ -43,11 +58,49 @@ class CommandExecutor:
         return f"File created at {path}."
 
     def _run_code(self, argument: str) -> str:
-        if not argument:
-            return "Code execution simulated. No code snippet was provided."
-        return f"Code execution simulated for: {argument[:120]}"
+        code = argument.strip()
+        if not code:
+            return "Code execution failed: no Python snippet was provided."
+
+        temp_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False, encoding="utf-8") as handle:
+                handle.write(code)
+                temp_path = Path(handle.name)
+
+            completed = subprocess.run(
+                [sys.executable, str(temp_path)],
+                capture_output=True,
+                text=True,
+                timeout=20,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return "Code execution timed out after 20 seconds."
+        except Exception as exc:
+            return f"Code execution failed: {exc}"
+        finally:
+            if temp_path is not None:
+                try:
+                    temp_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+
+        stdout = completed.stdout.strip()
+        stderr = completed.stderr.strip()
+        if completed.returncode != 0:
+            return f"Code execution failed with exit code {completed.returncode}: {stderr or stdout or 'no output'}"
+        if stdout:
+            return f"Code executed successfully: {stdout}"
+        return "Code executed successfully with no output."
 
     def _search_web(self, argument: str) -> str:
-        if not argument:
-            return "Web search simulated. No query was provided."
-        return f"Web search simulated for: {argument}"
+        query = argument.strip()
+        if not query:
+            return "Web search failed: no query was provided."
+        url = f"https://www.google.com/search?q={quote_plus(query)}"
+        try:
+            webbrowser.open(url, new=2)
+            return f"Web search opened for {query}."
+        except Exception as exc:
+            return f"Web search failed: {exc}"
