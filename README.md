@@ -98,8 +98,4 @@ The voice engine is optional. If audio libraries are not installed, JARVIS falls
 
 The HUD is a Tkinter window with a simple input bar, message log, and voice trigger button. It is meant to be a lightweight assistant shell rather than a full desktop suite.
 
-## Notes
 
-- Without an API key, JARVIS uses a local fallback responder.
-- Commands that cannot be executed safely are handled in a predictable, explicit way.
-- The project is structured so tools, memory, voice, and UI can be expanded later without rewiring the whole app.
