@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
 UI_DIR = ROOT / "jarvis-ui"
+ALLOWED_HOSTS = {"127.0.0.1", "localhost", "::1"}
+STATIC_FILES = {"index.html", "styles.css", "app.js", "favicon.svg", "robots.txt"}
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -25,26 +27,29 @@ ASSISTANT = JarvisAssistant(memory_store=MemoryStore())
 class JarvisRequestHandler(BaseHTTPRequestHandler):
     server_version = "JarvisHTTP/1.0"
 
-    def do_OPTIONS(self) -> None:  # noqa: N802
-        self.send_response(HTTPStatus.NO_CONTENT)
-        self.send_cors_headers()
-        self.end_headers()
-
     def do_GET(self) -> None:  # noqa: N802
+        if not self.is_local_host():
+            return
         parsed = urlparse(self.path)
-        if parsed.path in {"/", "/index.html"}:
-            self.serve_file(UI_DIR / "index.html")
-            return
-        if parsed.path == "/styles.css":
-            self.serve_file(UI_DIR / "styles.css")
-            return
-        if parsed.path == "/app.js":
-            self.serve_file(UI_DIR / "app.js")
+        if parsed.path == "/health":
+            self.send_json(
+                {
+                    "status": "ok",
+                    "engine": "llm" if ASSISTANT.llm.config.api_key else "local",
+                    "memory": len(ASSISTANT.memory_store.recent_messages()),
+                }
+            )
             return
 
-        self.send_error(HTTPStatus.NOT_FOUND, "File not found")
+        name = "index.html" if parsed.path in {"", "/"} else parsed.path.lstrip("/")
+        if name not in STATIC_FILES:
+            self.send_error(HTTPStatus.NOT_FOUND, "File not found")
+            return
+        self.serve_file(UI_DIR / name)
 
     def do_POST(self) -> None:  # noqa: N802
+        if not self.is_local_host():
+            return
         parsed = urlparse(self.path)
         if parsed.path != "/chat":
             self.send_error(HTTPStatus.NOT_FOUND, "Unknown endpoint")
@@ -72,11 +77,15 @@ class JarvisRequestHandler(BaseHTTPRequestHandler):
             "note": "Backend response delivered as animated modules.",
         }
 
+        self.send_json(payload)
+
+    def send_json(self, payload: dict[str, Any]) -> None:
+        body = json.dumps(payload).encode("utf-8")
         self.send_response(HTTPStatus.OK)
-        self.send_cors_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(json.dumps(payload).encode("utf-8"))
+        self.wfile.write(body)
 
     def serve_file(self, path: Path) -> None:
         if not path.exists():
@@ -85,17 +94,21 @@ class JarvisRequestHandler(BaseHTTPRequestHandler):
 
         content_type = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
         self.send_response(HTTPStatus.OK)
-        self.send_cors_headers()
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(path.stat().st_size))
         self.end_headers()
         with path.open("rb") as file_handle:
             self.wfile.write(file_handle.read())
 
-    def send_cors_headers(self) -> None:
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+    def is_local_host(self) -> bool:
+        # /chat can execute commands on this machine, so only accept requests addressed to
+        # localhost. No CORS headers are sent, which keeps other websites from calling the API,
+        # and the Host check blocks DNS-rebinding tricks.
+        host = (self.headers.get("Host") or "").rsplit(":", 1)[0].strip("[]").lower()
+        if host in ALLOWED_HOSTS:
+            return True
+        self.send_error(HTTPStatus.FORBIDDEN, "Local access only")
+        return False
 
     def log_message(self, format: str, *args: Any) -> None:
         return

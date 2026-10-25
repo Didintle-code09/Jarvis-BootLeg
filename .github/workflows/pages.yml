@@ -1,0 +1,40 @@
+name: Deploy portfolio demo
+
+on:
+  push:
+    branches: [main]
+    paths: ["jarvis-ui/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Publish only the static frontend. The Python backend never leaves the repo,
+      # so the public site always runs in demo mode.
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp jarvis-ui/index.html jarvis-ui/styles.css jarvis-ui/app.js \
+             jarvis-ui/favicon.svg jarvis-ui/robots.txt jarvis-ui/CNAME _site/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

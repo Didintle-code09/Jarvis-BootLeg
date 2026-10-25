@@ -3,59 +3,165 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JARVIS Interface</title>
+  <title>JARVIS · MoratamothoDevs</title>
+  <meta name="description" content="JARVIS is a voice-activated AI assistant with a live HUD interface, built by MoratamothoDevs. Python core, real command execution, memory, and a zero-build web UI." />
+  <meta name="author" content="MoratamothoDevs" />
+  <meta name="theme-color" content="#0a0302" />
+  <link rel="canonical" href="https://jarvis.moratamothodevs.co.za/" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="MoratamothoDevs" />
+  <meta property="og:title" content="JARVIS · AI assistant by MoratamothoDevs" />
+  <meta property="og:description" content="A voice-activated AI assistant with a live HUD interface. Python core, real command execution, conversation memory." />
+  <meta property="og:url" content="https://jarvis.moratamothodevs.co.za/" />
+  <meta name="twitter:card" content="summary" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="bg-grid"></div>
-  <div class="orb orb-a"></div>
-  <div class="orb orb-b"></div>
-  <div class="orb orb-c"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb-a" aria-hidden="true"></div>
+  <div class="orb orb-b" aria-hidden="true"></div>
+
+  <div class="ultron-core" id="core" aria-hidden="true">
+    <div class="core-ring core-ring-outer"></div>
+    <div class="core-ring core-ring-mid"></div>
+    <div class="core-ring core-ring-inner"></div>
+    <div class="core-cross core-cross-v"></div>
+    <div class="core-cross core-cross-h"></div>
+    <div class="core-iris">
+      <div class="core-pupil"></div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="https://moratamothodevs.co.za" rel="noopener">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">
+        <strong>JARVIS</strong>
+        <small>by MoratamothoDevs</small>
+      </span>
+    </a>
+    <nav class="topbar-actions">
+      <span class="conn-badge" id="connBadge" data-state="checking">
+        <span class="conn-dot" aria-hidden="true"></span>
+        <span id="connLabel">Connecting</span>
+      </span>
+      <button type="button" class="ghost-btn" id="aboutOpen">About the build</button>
+    </nav>
+  </header>
 
   <main class="shell">
-    <aside class="status-panel glass-panel">
-      <div class="panel-label">System Status</div>
-      <div class="status-title">JARVIS CORE ONLINE</div>
-      <div class="status-stack">
-        <div class="status-row"><span>MODE</span><strong id="statusMode">ANALYTIC</strong></div>
-        <div class="status-row"><span>ENGINE</span><strong id="statusEngine">WAITING</strong></div>
-        <div class="status-row"><span>BLOCKS</span><strong id="statusBlocks">0</strong></div>
-        <div class="status-row"><span>MEMORY</span><strong id="statusMemory">0</strong></div>
+    <aside class="status-panel panel" aria-label="System status">
+      <div class="panel-label">System status</div>
+      <div class="status-title">CORE ONLINE</div>
+      <dl class="status-stack">
+        <div class="status-row"><dt>Engine</dt><dd id="statusEngine">—</dd></div>
+        <div class="status-row"><dt>Voice</dt><dd id="statusVoice">Standby</dd></div>
+        <div class="status-row"><dt>Messages</dt><dd id="statusMessages">0</dd></div>
+        <div class="status-row"><dt>Memory</dt><dd id="statusMemory">0</dd></div>
+      </dl>
+
+      <div class="panel-label">Try a command</div>
+      <div class="chip-stack" id="suggestions">
+        <button type="button" class="chip" data-prompt="Who built you?">Who built you?</button>
+        <button type="button" class="chip" data-prompt="What can you do?">What can you do?</button>
+        <button type="button" class="chip" data-prompt="search web South African tech news">search web …</button>
+        <button type="button" class="chip" data-prompt="run code print(sum(range(10)))">run code …</button>
+        <button type="button" class="chip" data-prompt="open browser moratamothodevs.co.za">open browser …</button>
       </div>
-      <div class="status-note" id="statusNote">Awaiting input.</div>
+
+      <p class="status-note" id="statusNote">Awaiting input.</p>
     </aside>
 
-    <section class="conversation-stage">
-      <header class="hero glass-panel">
-        <div>
-          <div class="eyebrow">JARVIS MODULE GRID</div>
-          <h1>Intelligence in motion.</h1>
-        </div>
-        <div class="hero-meta">
-          <span class="meta-chip">live blocks</span>
-          <span class="meta-chip">chunked replies</span>
-          <span class="meta-chip">stream ready</span>
-          <span class="meta-chip" id="voiceChip">voice standby</span>
-        </div>
-      </header>
-
-      <section id="moduleGrid" class="module-grid" aria-live="polite"></section>
-      <div id="thinkingRow" class="thinking-row hidden">
-        <div class="thinking-pulse"></div>
-        <div class="thinking-text">Processing nodes...</div>
+    <section class="conversation" aria-label="Conversation">
+      <div id="transcript" class="transcript" aria-live="polite"></div>
+      <div id="thinkingRow" class="thinking-row" hidden>
+        <span class="thinking-pulse" aria-hidden="true"></span>
+        <span>Processing</span>
       </div>
     </section>
   </main>
 
-  <form id="chatForm" class="composer glass-panel" autocomplete="off">
-    <div class="composer-led"></div>
-    <input id="chatInput" name="message" type="text" placeholder="Speak to JARVIS..." aria-label="Type a message to JARVIS" />
-    <button type="button" id="voiceToggle">Enable Voice</button>
-    <button type="submit">Transmit</button>
+  <form id="chatForm" class="composer" autocomplete="off">
+    <button type="button" id="voiceToggle" class="voice-orb" aria-pressed="false" title="Enable voice (say “Hey Jarvis”)">
+      <span class="sr-only">Toggle voice activation</span>
+    </button>
+    <label class="sr-only" for="chatInput">Message JARVIS</label>
+    <input id="chatInput" name="message" type="text" placeholder="Speak or type to JARVIS…" maxlength="500" />
+    <button type="submit" class="send-btn">Transmit</button>
   </form>
+
+  <footer class="site-footer">
+    <span>© <span id="year">2026</span> MoratamothoDevs</span>
+    <a href="https://moratamothodevs.co.za" rel="noopener">moratamothodevs.co.za</a>
+  </footer>
+
+  <dialog id="aboutDialog" class="about" aria-labelledby="aboutTitle">
+    <div class="about-inner">
+      <header class="about-head">
+        <div>
+          <div class="panel-label">Portfolio · MoratamothoDevs</div>
+          <h2 id="aboutTitle">JARVIS: a voice-first AI assistant</h2>
+        </div>
+        <button type="button" class="ghost-btn" id="aboutClose" aria-label="Close">Close</button>
+      </header>
+
+      <p class="lead">
+        JARVIS is an assistant you can talk to in a terminal, a desktop HUD, or this browser interface.
+        It talks to an OpenAI-compatible language model, remembers recent conversation, and runs real
+        desktop commands like opening the browser, creating files, and running Python.
+      </p>
+
+      <div class="about-grid">
+        <section>
+          <h3>Highlights</h3>
+          <ul>
+            <li>Hands-free “Hey Jarvis” wake phrase using the Web Speech API</li>
+            <li>Spoken replies through speech synthesis</li>
+            <li>Command parser and executor for browser, file, code and search actions</li>
+            <li>Rolling conversation memory stored as JSON, no database</li>
+            <li>Falls back to a local responder when no API key is set</li>
+            <li>Zero-build frontend: plain HTML, CSS and JavaScript</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Architecture</h3>
+          <ol class="flow">
+            <li><strong>Browser UI</strong><span>voice, transcript, HUD</span></li>
+            <li><strong>Python HTTP server</strong><span>standard library, <code>/chat</code></span></li>
+            <li><strong>JarvisAssistant</strong><span>parser → executor → memory</span></li>
+            <li><strong>LLM client</strong><span>any OpenAI-compatible API</span></li>
+          </ol>
+        </section>
+      </div>
+
+      <section>
+        <h3>Stack</h3>
+        <div class="tag-row">
+          <span class="tag">Python 3.10+</span><span class="tag">http.server</span><span class="tag">Tkinter HUD</span>
+          <span class="tag">Web Speech API</span><span class="tag">Vanilla JS</span><span class="tag">CSS animation</span>
+        </div>
+      </section>
+
+      <section class="demo-note" id="demoNote">
+        <h3>About this demo</h3>
+        <p>
+          The public version runs in <strong>demo mode</strong>. Replies come from a built-in script, and commands are
+          simulated, so nothing runs on your machine. Run the project locally to connect the live Python backend.
+        </p>
+      </section>
+
+      <footer class="about-foot">
+        <p>Designed and built by <strong>MoratamothoDevs</strong>, a South African software studio.</p>
+        <a class="cta" href="https://moratamothodevs.co.za" rel="noopener">Work with us →</a>
+      </footer>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
